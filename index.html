@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Online-Weihnachtsfeier · Abstimmung</title>
+<meta name="description" content="Stimm ab: Wann machen wir unsere Online-Weihnachtsfeier und was machen wir?">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎄</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --night: #0e2621;
+    --night-2: #153a32;
+    --paper: #fbf6ec;
+    --paper-2: #f3ead8;
+    --ink: #1d2420;
+    --muted: #6b6a60;
+    --line: #e2d6bd;
+    --red: #b3263a;
+    --red-dark: #8d1b2c;
+    --gold: #c9a14a;
+    --gold-soft: #f4e6c3;
+    --green: #2f6b55;
+    --radius: 18px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100vh;
+    font-family: "DM Sans", system-ui, sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(1200px 600px at 80% -10%, #1f4d42 0%, transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, #1a3f37 0%, transparent 60%),
+      var(--night);
+    line-height: 1.5;
+  }
+  #snow { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+  .wrap { position: relative; z-index: 1; max-width: 860px; margin: 0 auto; padding: 48px 20px 64px; }
+
+  header { text-align: center; color: var(--paper); margin-bottom: 32px; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 13px; letter-spacing: .18em; text-transform: uppercase; color: var(--gold);
+  }
+  .eyebrow::before, .eyebrow::after { content: ""; width: 28px; height: 1px; background: var(--gold); opacity: .6; }
+  h1 {
+    font-family: "Fraunces", Georgia, serif; font-weight: 700;
+    font-size: clamp(34px, 6vw, 58px); line-height: 1.05; margin: 14px 0 12px;
+    letter-spacing: -.01em;
+  }
+  h1 em { font-style: italic; color: var(--gold); font-weight: 500; }
+  header p { margin: 0 auto; max-width: 520px; color: #cfd8d2; font-size: 17px; }
+
+  .tabs {
+    display: flex; gap: 6px; padding: 6px; margin: 0 auto 18px; width: fit-content;
+    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); border-radius: 999px;
+  }
+  .tab {
+    border: 0; background: transparent; color: #d9e2dc; font: inherit; font-weight: 500;
+    padding: 9px 20px; border-radius: 999px; cursor: pointer;
+  }
+  .tab[aria-selected="true"] { background: var(--paper); color: var(--ink); }
+
+  .card {
+    background: var(--paper); border-radius: 26px; padding: 34px clamp(20px, 4vw, 44px);
+    box-shadow: 0 30px 80px rgba(0,0,0,.35), 0 0 0 1px rgba(255,255,255,.04);
+    position: relative; overflow: hidden;
+  }
+  .card::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 8px;
+    background: repeating-linear-gradient(-45deg, var(--red) 0 14px, var(--paper) 14px 28px);
+    opacity: .9;
+  }
+
+  .step { margin-top: 30px; }
+  .step:first-of-type { margin-top: 6px; }
+  .step-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px; }
+  .num {
+    flex: none; width: 30px; height: 30px; border-radius: 50%;
+    display: grid; place-items: center; font-weight: 700; font-size: 14px;
+    background: var(--red); color: #fff; transform: translateY(-3px);
+  }
+  h2 { font-family: "Fraunces", Georgia, serif; font-size: 25px; font-weight: 700; margin: 0; }
+  .hint { color: var(--muted); margin: 0 0 16px 42px; font-size: 15px; }
+
+  .field {
+    width: 100%; font: inherit; font-size: 17px; padding: 14px 16px;
+    border: 1.5px solid var(--line); border-radius: 14px; background: #fff; color: var(--ink);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .field:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 4px var(--gold-soft); }
+
+  /* Termine als Kalenderblätter */
+  .dates { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+  @media (max-width: 720px) { .dates { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); } }
+  .date input, .act input { position: absolute; opacity: 0; pointer-events: none; }
+  .date label {
+    display: block; cursor: pointer; text-align: center; border-radius: 14px; overflow: hidden;
+    background: #fff; border: 1.5px solid var(--line); position: relative;
+    transition: transform .15s, border-color .15s, box-shadow .15s;
+  }
+  .date label:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(60,40,10,.10); }
+  .date .wd { display: block; background: var(--red); color: #fff; font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; padding: 6px 0; }
+  .date .day { display: block; font-family: "Fraunces", Georgia, serif; font-size: 38px; font-weight: 700; line-height: 1; padding: 12px 0 4px; }
+  .date .mon { display: block; font-size: 13px; color: var(--muted); padding-bottom: 12px; }
+  .date input:checked + label { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-soft), 0 8px 18px rgba(60,40,10,.12); }
+  .date input:checked + label .wd { background: var(--green); }
+  .date input:focus-visible + label, .act input:focus-visible + label { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+  .tick {
+    position: absolute; top: 34px; right: 8px; width: 22px; height: 22px; border-radius: 50%;
+    background: var(--gold); color: #fff; display: grid; place-items: center;
+    transform: scale(0); transition: transform .18s cubic-bezier(.3,1.6,.6,1);
+  }
+  .tick svg { width: 13px; height: 13px; }
+  input:checked + label .tick { transform: scale(1); }
+
+  .quick { display: flex; gap: 8px; margin: 0 0 12px 42px; flex-wrap: wrap; }
+  .chip {
+    font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 999px; cursor: pointer;
+    border: 1px solid var(--line); background: transparent; color: var(--muted);
+  }
+  .chip:hover { border-color: var(--gold); color: var(--ink); }
+
+  /* Aktivitäten */
+  .acts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  @media (max-width: 560px) { .acts { grid-template-columns: 1fr; } }
+  .act label {
+    display: flex; flex-direction: column; gap: 6px; height: 100%; cursor: pointer; position: relative;
+    padding: 18px 18px 16px; border-radius: 16px; background: #fff; border: 1.5px solid var(--line);
+    transition: transform .15s, border-color .15s, box-shadow .15s, background .15s;
+  }
+  .act label:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(60,40,10,.10); }
+  .act .ico {
+    width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center;
+    background: var(--paper-2); color: var(--red); margin-bottom: 4px;
+  }
+  .act .ico svg { width: 24px; height: 24px; }
+  .act strong { font-size: 17px; }
+  .act small { color: var(--muted); font-size: 14px; line-height: 1.4; }
+  .act .tick { top: 14px; right: 14px; }
+  .act input:checked + label { border-color: var(--gold); background: #fffdf7; box-shadow: 0 0 0 3px var(--gold-soft); }
+  .act input:checked + label .ico { background: var(--red); color: #fff; }
+
+  .other-box { display: none; margin-top: 12px; }
+  .other-box.show { display: block; animation: drop .2s ease-out; }
+  textarea.field { min-height: 86px; resize: vertical; }
+  @keyframes drop { from { opacity: 0; transform: translateY(-6px); } }
+
+  .submit-row { margin-top: 32px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .btn {
+    font: inherit; font-weight: 700; font-size: 17px; cursor: pointer; border: 0;
+    padding: 15px 28px; border-radius: 999px; color: #fff; background: var(--red);
+    box-shadow: 0 6px 0 var(--red-dark); transition: transform .1s, box-shadow .1s, opacity .15s;
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 7px 0 var(--red-dark); }
+  .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--red-dark); }
+  .btn[disabled] { opacity: .6; cursor: wait; }
+  .btn.ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--line); }
+  .error { color: var(--red); font-weight: 500; margin: 0; }
+  .note { color: var(--muted); font-size: 14px; margin: 0; }
+
+  /* Danke */
+  .thanks { text-align: center; padding: 10px 0 6px; }
+  .thanks .big { font-size: 54px; line-height: 1; }
+  .thanks h2 { font-size: 30px; margin: 10px 0 6px; }
+  .thanks p { color: var(--muted); margin: 0 0 22px; }
+
+  /* Ergebnisse */
+  .stats { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+  .stat { flex: 1 1 180px; background: #fff; border: 1.5px solid var(--line); border-radius: 16px; padding: 14px 18px; }
+  .stat b { display: block; font-family: "Fraunces", Georgia, serif; font-size: 30px; line-height: 1.1; }
+  .stat span { color: var(--muted); font-size: 14px; }
+  .res-title { font-family: "Fraunces", Georgia, serif; font-size: 22px; margin: 28px 0 12px; }
+  .bars { display: grid; gap: 10px; }
+  .bar { display: grid; grid-template-columns: 150px 1fr 38px; align-items: center; gap: 12px; }
+  .bar .lbl { font-weight: 500; }
+  .bar .lbl small { display: block; color: var(--muted); font-weight: 400; font-size: 13px; }
+  .track { height: 14px; background: var(--paper-2); border-radius: 999px; overflow: hidden; }
+  .fill { height: 100%; width: 0; border-radius: 999px; background: var(--gold); transition: width .7s cubic-bezier(.2,.8,.2,1); }
+  .bar.top .fill { background: var(--green); }
+  .bar .cnt { text-align: right; font-weight: 700; }
+  .who { grid-column: 2 / 4; color: var(--muted); font-size: 13px; margin-top: -6px; }
+  .ideas { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+  .ideas li { background: #fff; border: 1.5px solid var(--line); border-radius: 14px; padding: 12px 16px; }
+  .ideas li span { color: var(--muted); font-size: 13px; display: block; }
+  .empty { color: var(--muted); text-align: center; padding: 30px 0; }
+
+  footer { text-align: center; color: #9fb2a9; font-size: 13px; margin-top: 26px; }
+  [hidden] { display: none !important; }
+
+  @media (max-width: 560px) {
+    .eyebrow::before, .eyebrow::after { display: none; }
+    .hint, .quick { margin-left: 0; }
+    .bar { grid-template-columns: 1fr 34px; }
+    .bar .track { grid-column: 1 / 3; grid-row: 2; }
+    .who { grid-column: 1 / 3; margin-top: -4px; }
+  }
+  @media (prefers-reduced-motion: reduce) { #snow { display: none; } * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<canvas id="snow" aria-hidden="true"></canvas>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Weihnachtsfeier 2026 · online</span>
+    <h1>Wann feiern wir – <em>und wie?</em></h1>
+    <p>Sag uns, an welchen Abenden du kannst und worauf du Lust hast. Dauert keine Minute.</p>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-vote" aria-selected="true">Abstimmen</button>
+    <button class="tab" role="tab" id="tab-results" aria-selected="false">Ergebnisse</button>
+  </nav>
+
+  <main class="card">
+    <!-- Formular -->
+    <form id="form" novalidate>
+      <section class="step">
+        <div class="step-head"><span class="num">1</span><h2>Wer bist du?</h2></div>
+        <p class="hint">Damit wir wissen, wer dabei ist. Mit demselben Namen kannst du deine Stimme später ändern.</p>
+        <input class="field" id="name" name="name" type="text" maxlength="40" autocomplete="given-name" placeholder="Vorname" required>
+      </section>
+
+      <section class="step">
+        <div class="step-head"><span class="num">2</span><h2>Wann kannst du?</h2></div>
+        <p class="hint">Wähl <b>alle</b> Abende, die für dich passen – jeweils ab 19 Uhr.</p>
+        <div class="quick">
+          <button type="button" class="chip" id="all-dates">Alle auswählen</button>
+          <button type="button" class="chip" id="no-dates">Keine</button>
+        </div>
+        <div class="dates" id="dates"></div>
+      </section>
+
+      <section class="step">
+        <div class="step-head"><span class="num">3</span><h2>Was wollen wir machen?</h2></div>
+        <p class="hint">Mehrfachauswahl erlaubt – kreuz alles an, worauf du Lust hättest.</p>
+        <div class="acts" id="acts"></div>
+        <div class="other-box" id="other-box">
+          <textarea class="field" id="other" maxlength="300" placeholder="Deine Idee, z. B. gemeinsam Plätzchen backen, Wichteln, Krimidinner …"></textarea>
+        </div>
+      </section>
+
+      <div class="submit-row">
+        <button class="btn" type="submit" id="submit">Stimme abgeben 🎁</button>
+        <p class="error" id="error" role="alert"></p>
+      </div>
+    </form>
+
+    <!-- Danke -->
+    <section class="thanks" id="thanks" hidden>
+      <div class="big">🎄</div>
+      <h2>Danke, <span id="thanks-name"></span>!</h2>
+      <p>Deine Stimme ist gespeichert. Du kannst sie jederzeit ändern.</p>
+      <div class="submit-row" style="justify-content:center;margin-top:0">
+        <button class="btn" type="button" id="show-results">Ergebnisse ansehen</button>
+        <button class="btn ghost" type="button" id="edit-vote">Stimme ändern</button>
+      </div>
+    </section>
+
+    <!-- Ergebnisse -->
+    <section id="results" hidden>
+      <div class="stats" id="stats"></div>
+      <div id="res-body"></div>
+    </section>
+  </main>
+
+  <footer>Frohe Weihnachten! ✨</footer>
+</div>
+
+<script>
+const DATES = [
+  { id: "2026-12-08", wd: "Di", day: 8 },
+  { id: "2026-12-10", wd: "Do", day: 10 },
+  { id: "2026-12-15", wd: "Di", day: 15 },
+  { id: "2026-12-16", wd: "Mi", day: 16 },
+  { id: "2026-12-17", wd: "Do", day: 17 },
+  { id: "2026-12-22", wd: "Di", day: 22 },
+  { id: "2026-12-23", wd: "Mi", day: 23 },
+];
+const WD_LONG = { Di: "Dienstag", Mi: "Mittwoch", Do: "Donnerstag" };
+const ICONS = {
+  quiz: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M10 9.5a2.2 2.2 0 1 1 3 2c-.6.3-1 .8-1 1.5"/><path d="M12 16h.01"/></svg>',
+  escape: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3"/><path d="m17 6 3 3"/><path d="m15 8 2 2"/></svg>',
+  games: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+  other: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2V17h6v-.3c0-.8.4-1.5 1-2A7 7 0 0 0 12 2z"/></svg>',
+};
+const ACTS = [
+  { id: "quiz", title: "Quiz", desc: "Pub-Quiz, Gameshow & Co. – Teams, Punkte, Ruhm." },
+  { id: "escape", title: "Escape Room", desc: "Gemeinsam Rätsel knacken und rechtzeitig rauskommen." },
+  { id: "games", title: "Online-Games", desc: "Montagsmaler, Codenames & andere Partyspiele." },
+  { id: "other", title: "Sonstige Idee", desc: "Du hast was Besseres? Her damit!" },
+];
+const TICK = '<span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span>';
+const API = "/api/votes";
+const LS_KEY = "xmas-vote-2026";
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+// Formular aufbauen
+$("#dates").innerHTML = DATES.map((d) => `
+  <div class="date">
+    <input type="checkbox" id="d-${d.id}" name="dates" value="${d.id}">
+    <label for="d-${d.id}" title="${WD_LONG[d.wd]}, ${d.day}. Dezember, ab 19 Uhr">
+      <span class="wd">${d.wd}</span><span class="day">${d.day}</span><span class="mon">Dez · 19 Uhr</span>${TICK}
+    </label>
+  </div>`).join("");
+$("#acts").innerHTML = ACTS.map((a) => `
+  <div class="act">
+    <input type="checkbox" id="a-${a.id}" name="acts" value="${a.id}">
+    <label for="a-${a.id}"><span class="ico">${ICONS[a.id]}</span><strong>${a.title}</strong><small>${a.desc}</small>${TICK}</label>
+  </div>`).join("");
+
+const otherCb = $("#a-other");
+otherCb.addEventListener("change", () => {
+  $("#other-box").classList.toggle("show", otherCb.checked);
+  if (otherCb.checked) $("#other").focus();
+});
+$("#all-dates").onclick = () => document.querySelectorAll('[name="dates"]').forEach((c) => (c.checked = true));
+$("#no-dates").onclick = () => document.querySelectorAll('[name="dates"]').forEach((c) => (c.checked = false));
+
+// Gespeicherte eigene Stimme vorausfüllen
+let mine = null;
+try { mine = JSON.parse(localStorage.getItem(LS_KEY) || "null"); } catch {}
+function fill(v) {
+  if (!v) return;
+  $("#name").value = v.n || "";
+  document.querySelectorAll('[name="dates"]').forEach((c) => (c.checked = (v.d || []).includes(c.value)));
+  document.querySelectorAll('[name="acts"]').forEach((c) => (c.checked = (v.a || []).includes(c.value)));
+  $("#other").value = v.o || "";
+  $("#other-box").classList.toggle("show", otherCb.checked);
+}
+fill(mine);
+
+// Ansichten
+function show(view) {
+  $("#form").hidden = view !== "form";
+  $("#thanks").hidden = view !== "thanks";
+  $("#results").hidden = view !== "results";
+  $("#tab-vote").setAttribute("aria-selected", view !== "results");
+  $("#tab-results").setAttribute("aria-selected", view === "results");
+  if (view === "results") loadResults();
+}
+$("#tab-vote").onclick = () => show(mine ? "thanks" : "form");
+$("#tab-results").onclick = () => show("results");
+$("#show-results").onclick = () => show("results");
+$("#edit-vote").onclick = () => { fill(mine); show("form"); };
+if (mine) { $("#thanks-name").textContent = mine.n; show("thanks"); }
+
+// Absenden
+$("#form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const err = $("#error");
+  err.textContent = "";
+  const payload = {
+    name: $("#name").value.trim(),
+    dates: [...document.querySelectorAll('[name="dates"]:checked')].map((c) => c.value),
+    activities: [...document.querySelectorAll('[name="acts"]:checked')].map((c) => c.value),
+    other: $("#other").value.trim(),
+  };
+  if (!payload.name) { err.textContent = "Bitte gib deinen Namen an."; $("#name").focus(); return; }
+  if (!payload.dates.length) { err.textContent = "Bitte wähl mindestens einen Termin."; return; }
+  if (!payload.activities.length) { err.textContent = "Bitte wähl mindestens eine Idee."; return; }
+  if (payload.activities.includes("other") && !payload.other) { err.textContent = "Bitte beschreib kurz deine sonstige Idee."; $("#other").focus(); return; }
+
+  const btn = $("#submit");
+  btn.disabled = true; btn.textContent = "Wird gespeichert …";
+  try {
+    const res = await fetch(API, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "Speichern hat nicht geklappt.");
+    mine = data.vote;
+    localStorage.setItem(LS_KEY, JSON.stringify(mine));
+    $("#thanks-name").textContent = mine.n;
+    show("thanks");
+    burst();
+  } catch (ex) {
+    err.textContent = ex.message || "Speichern hat nicht geklappt. Versuch's bitte nochmal.";
+  } finally {
+    btn.disabled = false; btn.textContent = "Stimme abgeben 🎁";
+  }
+});
+
+// Ergebnisse
+async function loadResults() {
+  const body = $("#res-body");
+  $("#stats").innerHTML = "";
+  body.innerHTML = '<p class="empty">Lade Ergebnisse …</p>';
+  let votes = [];
+  try {
+    const res = await fetch(API, { cache: "no-store" });
+    if (!res.ok) throw new Error();
+    votes = (await res.json()).votes || [];
+  } catch {
+    body.innerHTML = '<p class="empty">Ergebnisse konnten nicht geladen werden.</p>';
+    return;
+  }
+  // Eigene Stimme sofort berücksichtigen (der Speicher braucht ggf. ein paar Sekunden)
+  if (mine) {
+    votes = votes.filter((v) => v.n.toLowerCase() !== mine.n.toLowerCase());
+    votes.push(mine);
+  }
+  if (!votes.length) { body.innerHTML = '<p class="empty">Noch keine Stimmen – sei die/der Erste! 🎅</p>'; return; }
+
+  const total = votes.length;
+  const dateRows = DATES.map((d) => {
+    const who = votes.filter((v) => v.d.includes(d.id)).map((v) => v.n);
+    return { label: `${WD_LONG[d.wd]}`, sub: `${d.day}. Dezember`, short: `${d.wd}, ${d.day}.12.`, count: who.length, who };
+  });
+  const actRows = ACTS.map((a) => {
+    const who = votes.filter((v) => v.a.includes(a.id)).map((v) => v.n);
+    return { label: a.title, count: who.length, who };
+  });
+  const bestDate = dateRows.reduce((m, r) => (r.count > m ? r.count : m), 0);
+  const bestAct = actRows.reduce((m, r) => (r.count > m ? r.count : m), 0);
+  const topDates = dateRows.filter((r) => r.count === bestDate && bestDate > 0).map((r) => r.short).join(" / ");
+  const topActs = actRows.filter((r) => r.count === bestAct && bestAct > 0).map((r) => r.label).join(" / ");
+
+  $("#stats").innerHTML = `
+    <div class="stat"><b>${total}</b><span>${total === 1 ? "Stimme" : "Stimmen"} bisher</span></div>
+    <div class="stat"><b>${esc(topDates || "–")}</b><span>beliebtester Termin (${bestDate}/${total})</span></div>
+    <div class="stat"><b>${esc(topActs || "–")}</b><span>beliebteste Idee (${bestAct}/${total})</span></div>`;
+
+  const bars = (rows, best) => rows.map((r) => `
+    <div class="bar ${r.count === best && best > 0 ? "top" : ""}">
+      <div class="lbl">${esc(r.label)}${r.sub ? `<small>${esc(r.sub)}</small>` : ""}</div>
+      <div class="track"><div class="fill" data-w="${(r.count / total) * 100}"></div></div>
+      <div class="cnt">${r.count}</div>
+      ${r.who.length ? `<div class="who">${r.who.map(esc).join(", ")}</div>` : ""}
+    </div>`).join("");
+
+  const ideas = votes.filter((v) => v.o);
+  body.innerHTML = `
+    <h3 class="res-title">Termine</h3><div class="bars">${bars(dateRows, bestDate)}</div>
+    <h3 class="res-title">Programm</h3><div class="bars">${bars(actRows, bestAct)}</div>
+    ${ideas.length ? `<h3 class="res-title">Sonstige Ideen</h3><ul class="ideas">${ideas.map((v) => `<li>${esc(v.o)}<span>– ${esc(v.n)}</span></li>`).join("")}</ul>` : ""}`;
+  requestAnimationFrame(() => requestAnimationFrame(() =>
+    document.querySelectorAll(".fill").forEach((f) => (f.style.width = f.dataset.w + "%"))));
+}
+
+// Schneefall
+const cv = $("#snow"), ctx = cv.getContext("2d");
+let flakes = [], W, H, boost = 0;
+function resize() {
+  W = cv.width = innerWidth * devicePixelRatio; H = cv.height = innerHeight * devicePixelRatio;
+  cv.style.width = innerWidth + "px"; cv.style.height = innerHeight + "px";
+  const n = Math.round(Math.min(140, innerWidth / 9));
+  flakes = Array.from({ length: n }, () => newFlake(true));
+}
+function newFlake(anyY) {
+  return { x: Math.random() * W, y: anyY ? Math.random() * H : -10, r: (Math.random() * 2 + .8) * devicePixelRatio,
+           s: (Math.random() * .6 + .3) * devicePixelRatio, w: Math.random() * Math.PI * 2, o: Math.random() * .5 + .3 };
+}
+function tick() {
+  ctx.clearRect(0, 0, W, H);
+  const speed = 1 + boost; boost *= .97;
+  for (const f of flakes) {
+    f.y += f.s * speed; f.w += .01; f.x += Math.sin(f.w) * .3 * devicePixelRatio;
+    if (f.y > H + 10) Object.assign(f, newFlake(false));
+    ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,255,255,${f.o})`; ctx.fill();
+  }
+  requestAnimationFrame(tick);
+}
+function burst() { boost = 6; }
+addEventListener("resize", resize);
+resize(); tick();
+</script>
+</body>
+</html>
