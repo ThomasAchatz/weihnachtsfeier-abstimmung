@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "weihnachtsfeier-abstimmung",
+  "main": "src/index.js",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  // Ohne "id" legt Wrangler den KV-Speicher beim ersten Deploy automatisch an
+  "kv_namespaces": [{ "binding": "VOTES" }]
+}

@@ -1,5 +1,5 @@
-// Cloudflare Pages Function: /api/votes
-// Benötigt ein KV-Namespace-Binding mit dem Namen VOTES.
+// API-Logik für /api/votes
+// Nutzt das KV-Binding VOTES (wird beim Deploy automatisch angelegt).
 // Jede Stimme wird als eigener Key gespeichert (vote:<name>), die Daten liegen
 // in den Metadaten – so reicht ein einziger list()-Aufruf zum Auswerten.
 
@@ -12,7 +12,7 @@ const json = (data, status = 200) =>
     headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
   });
 
-export async function onRequestGet({ env }) {
+export async function handleGet({ env }) {
   const votes = [];
   let cursor;
   do {
@@ -24,7 +24,7 @@ export async function onRequestGet({ env }) {
   return json({ votes });
 }
 
-export async function onRequestPost({ request, env }) {
+export async function handlePost({ request, env }) {
   let body;
   try {
     body = await request.json();
